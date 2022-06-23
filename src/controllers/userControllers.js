@@ -1,5 +1,6 @@
 const UserModel = require("../models/User");
 const { registerValidation } = require("../utils/validation");
+const bcrypt = require("bcryptjs");
 
 const registerUser = async (req, res) => {
   //validation
@@ -19,8 +20,17 @@ const registerUser = async (req, res) => {
         .json({ success: false, message: "user already exists" });
     }
 
+    //hash password
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(value.password, salt);
+
     //create a new user
-    const user = new UserModel(value);
+    const user = new UserModel({
+      name: value.name,
+      email: value.email,
+      password: hashedPassword,
+    });
 
     //save user in database
     const savedUser = await user.save();
