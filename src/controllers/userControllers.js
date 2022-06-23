@@ -1,5 +1,5 @@
 const UserModel = require("../models/User");
-const { registerValidation } = require("../utils/validation");
+const { registerValidation, loginValidation } = require("../utils/validation");
 const bcrypt = require("bcryptjs");
 
 const registerUser = async (req, res) => {
@@ -16,7 +16,7 @@ const registerUser = async (req, res) => {
     const emailExist = await UserModel.findOne({ email: value.email });
     if (emailExist) {
       return res
-        .status(200)
+        .status(400)
         .json({ success: false, message: "user already exists" });
     }
 
@@ -37,10 +37,36 @@ const registerUser = async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, message: "user created", data: savedUser });
+      .json({ success: true, message: "user created", user: savedUser._id });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-module.exports = { registerUser };
+const loginUser = async (req, res) => {
+  //validation
+  const { error, value } = loginValidation(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+
+  //check if the email exists
+  const user = await UserModel.findOne({ email: value.email });
+  if (!user) {
+    return res.status(400).json({ success: false, message: "email  is wrong" });
+  }
+  //check if the password is correct
+  const validPassword = await bcrypt.compare(value.password, user.password);
+  if (!validPassword) {
+    return res
+      .status(400)
+      .json({ success: false, message: "password  is wrong" });
+  }
+  res.send(user);
+
+  //check if password is correct
+};
+
+module.exports = { registerUser, loginUser };
