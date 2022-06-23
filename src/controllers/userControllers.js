@@ -10,16 +10,26 @@ const registerUser = async (req, res) => {
       .json({ success: false, message: error.details[0].message });
   }
 
-  //create a new user
-  const user = new UserModel(value);
-
   try {
+    //verify if the email exists
+    const emailExist = await UserModel.findOne({ email: value.email });
+    if (emailExist) {
+      return res
+        .status(200)
+        .json({ success: false, message: "user already exists" });
+    }
+
+    //create a new user
+    const user = new UserModel(value);
+
     //save user in database
     const savedUser = await user.save();
 
-    res.status(200).send(savedUser);
+    res
+      .status(200)
+      .json({ success: true, message: "user created", data: savedUser });
   } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
