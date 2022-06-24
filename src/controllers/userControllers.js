@@ -65,8 +65,6 @@ const loginUser = async (req, res) => {
       .json({ success: false, message: "password  is wrong" });
   }
   res.send(user);
-
-  //check if password is correct
 };
 
 module.exports = { registerUser, loginUser };
