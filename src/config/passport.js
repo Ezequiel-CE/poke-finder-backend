@@ -1,6 +1,7 @@
 const passport = require("passport");
-const LocalStrategy = require("passport-local");
-const JwtStrategy = require("passport-jwt");
+const LocalStrategy = require("passport-local").Strategy;
+const JwtStrategy = require("passport-jwt").Strategy;
+const ExtractJwt = require("passport-jwt").ExtractJwt;
 const UserModel = require("../models/User");
 const bcrypt = require("bcryptjs");
 
@@ -49,3 +50,19 @@ passport.use(
 );
 
 //JWT STRATEGY
+
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET,
+    },
+    (payload, done) => {
+      try {
+        done(null, payload);
+      } catch (error) {
+        done(error);
+      }
+    }
+  )
+);
