@@ -1,7 +1,19 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
+const JwtStrategy = require("passport-jwt");
 const UserModel = require("../models/User");
 const bcrypt = require("bcryptjs");
+
+//agregan user al req
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+//local strategy
 
 const customFields = {
   usernameField: "email",
@@ -12,7 +24,8 @@ passport.use(
   new LocalStrategy(customFields, async function (username, password, done) {
     try {
       //check the user
-      const user = await UserModel.findOne({ email: value.email });
+      const user = await UserModel.findOne({ email: username });
+
       if (!user) {
         return done(null, false);
       }
@@ -20,24 +33,19 @@ passport.use(
       const validPassword = await bcrypt.compare(password, user.password);
 
       if (validPassword) {
-        return done(null, user);
+        //take the js object | moongose send more api in the response
+        const { _doc, ...rest } = user;
+        //delete password
+        delete _doc.password;
+
+        return done(null, _doc);
       } else {
-        return done(null, false);
+        return done(null, false); //envia status code 401
       }
     } catch (error) {
-      return done(error);
+      return done(error); //envia status code 401
     }
   })
 );
 
-passport.serializeUser(function (user, cb) {
-  process.nextTick(function () {
-    cb(null, { id: user.id, username: user.username });
-  });
-});
-
-passport.deserializeUser(function (user, cb) {
-  process.nextTick(function () {
-    return cb(null, user);
-  });
-});
+//JWT STRATEGY

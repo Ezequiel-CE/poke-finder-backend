@@ -1,6 +1,7 @@
 const UserModel = require("../models/User");
 const { registerValidation, loginValidation } = require("../utils/validation");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
   //validation
@@ -35,36 +36,32 @@ const registerUser = async (req, res) => {
     //save user in database
     const savedUser = await user.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "user created", user: savedUser._id });
+    const token = jwt.sign(
+      { id: savedUser._id, email: savedUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({ success: true, message: "user created", token });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-const loginUser = async (req, res) => {
-  //validation
-  const { error, value } = loginValidation(req.body);
-  if (error) {
-    return res
-      .status(400)
-      .json({ success: false, message: error.details[0].message });
-  }
+//LOGIN
 
-  //check if the email exists
-  const user = await UserModel.findOne({ email: value.email });
-  if (!user) {
-    return res.status(400).json({ success: false, message: "email  is wrong" });
-  }
-  //check if the password is correct
-  const validPassword = await bcrypt.compare(value.password, user.password);
-  if (!validPassword) {
-    return res
-      .status(400)
-      .json({ success: false, message: "password  is wrong" });
-  }
-  res.send(user);
+const loginUser = async (req, res) => {
+  const token = jwt.sign(
+    { id: req.user._id, email: req.user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: `estas logeado ${req.user.name}`,
+    token,
+  });
 };
 
 module.exports = { registerUser, loginUser };
