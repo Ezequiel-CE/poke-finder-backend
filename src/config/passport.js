@@ -51,18 +51,17 @@ passport.use(
 
 //JWT STRATEGY
 
+const options = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_SECRET,
+};
+
 passport.use(
-  new JwtStrategy(
-    {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
-    },
-    (payload, done) => {
-      try {
-        done(null, payload);
-      } catch (error) {
-        done(error);
-      }
+  new JwtStrategy(options, (payload, done) => {
+    try {
+      done(null, payload);
+    } catch (error) {
+      done(error);
     }
-  )
+  })
 );
